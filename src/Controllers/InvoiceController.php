@@ -309,13 +309,13 @@ class InvoiceController {
                 INSERT INTO invoices
                 (
                     id, company_id, client_id, sif_id, numero, fecha_emision,
-                    base_imponible, iva_porcentaje, cuota_iva, total,
+                    base_imponible, cuota_iva, total,
                     estado, tipo_factura, origen, factura_rectificada_id, motivo_rectificacion
                 )
                 VALUES
                 (
                     :id, :company_id, :client_id,  :sif_id, 'BORRADOR', :fecha_emision,
-                    0, 0, 0, 0,
+                    0, 0, 0,
                     'BORRADOR', :tipo_factura, 'FORM', :factura_rectificada_id, :motivo_rectificacion
                 )
             ");
@@ -425,8 +425,7 @@ class InvoiceController {
                     base_imponible = :base,
                     cuota_iva = :cuota,
                     cuota_irpf = :irpf,
-                    total = :total,
-                    iva_porcentaje= 0
+                    total = :total
                 WHERE id = :id
             ");
             $stmt->execute([
@@ -1801,12 +1800,12 @@ class InvoiceController {
                 INSERT INTO invoices (
                     id, company_id, client_id, sif_id, numero, fecha_emision, 
                     estado, origen, pdf_original, tipo_factura,
-                    base_imponible, iva_porcentaje, cuota_iva, cuota_irpf, total,
+                    base_imponible, cuota_iva, cuota_irpf, total,
                     factura_rectificada_id,motivo_rectificacion
                 ) VALUES (
                     :id, :comp, :cli, :sif_id, :num, :fecha, 
                     'BORRADOR', 'PDF', :pdf, :tipo,
-                    0, 0, 0, 0, 0,
+                    0, 0, 0, 0,
                     :id_rectificada, :motivo
                 )
             ");
