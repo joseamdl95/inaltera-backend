@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:element name="Factura">
+    <xs:complexType>
+      <xs:sequence>
+
+        <xs:element name="NumeroFactura" type="xs:string"/>
+        <xs:element name="FechaEmision" type="xs:dateTime"/>
+
+        <xs:element name="Emisor">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="RazonSocial" type="xs:string"/>
+              <xs:element name="NIF" type="xs:string"/>
+              <xs:element name="Pais" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
+        <xs:element name="Receptor">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Nombre" type="xs:string"/>
+              <xs:element name="NIF" type="xs:string"/>
+              <xs:element name="Pais" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
+        <xs:element name="Lineas">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Linea" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+
+                    <xs:element name="Descripcion" type="xs:string"/>
+                    <xs:element name="Cantidad" type="xs:decimal"/>
+                    <xs:element name="PrecioUnitario" type="xs:decimal"/>
+                    <xs:element name="BaseImponible" type="xs:decimal"/>
+
+                    <xs:element name="TipoIVA" type="xs:decimal" minOccurs="0"/>
+                    <xs:element name="CuotaIVA" type="xs:decimal" minOccurs="0"/>
+
+                    <xs:element name="TipoIRPF" type="xs:decimal" minOccurs="0"/>
+                    <xs:element name="CuotaIRPF" type="xs:decimal" minOccurs="0"/>
+
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
+        <xs:element name="Totales">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="BaseImponible" type="xs:decimal"/>
+              <xs:element name="CuotaIVA" type="xs:decimal" minOccurs="0"/>
+              <xs:element name="CuotaIRPF" type="xs:decimal" minOccurs="0"/>
+              <xs:element name="Total" type="xs:decimal"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
+        <xs:element name="Rectificacion" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Tipo" type="xs:string"/>
+              <xs:element name="FacturaRectificada" type="xs:string" minOccurs="0"/>
+              <xs:element name="Motivo" type="xs:string" minOccurs="0"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        
+        <xs:element name="NoVerifactu">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="HashActual" type="xs:string"/>
+              <xs:element name="HashAnterior" type="xs:string" minOccurs="0"/>
+              <xs:element name="Cadena" type="xs:integer"/>
+              <xs:element name="VersionSIF" type="xs:string" minOccurs="0"/> 
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>
