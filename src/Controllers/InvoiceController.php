@@ -147,6 +147,9 @@ class InvoiceController {
                 throw new Exception('Fecha inválida');
             }
             if (strtotime($data['fecha_emision']) > time()) {
+                error_log("fecha_emision: " . $data['fecha_emision']);
+                error_log("strtotime: " . strtotime($data['fecha_emision']));
+                error_log("time(): " . time());
                 throw new Exception("La fecha no puede ser futura");
             }
 
