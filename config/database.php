@@ -1,9 +1,9 @@
 <?php
 
-$host = 'sql111.infinityfree.com';
-$db   = 'if0_41321723_inalteradb';
-$user = 'if0_41321723';
-$pass = '3T9hFEeFRv7HT';
+$host = 'mysql.railway.internal';
+$db   = 'railway';
+$user = 'root';
+$pass = 'jpNMCjkXGUawJHnJcwcUphoGTgSwzhGn';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
