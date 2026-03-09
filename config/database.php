@@ -1,12 +1,13 @@
 <?php
 
-$host = 'mysql.railway.internal';
+$host = 'centerbeam.proxy.rlwy.net';
+$port = 45311;
 $db   = 'railway';
 $user = 'root';
 $pass = 'jpNMCjkXGUawJHnJcwcUphoGTgSwzhGn';
 $charset = 'utf8mb4';
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
 
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
