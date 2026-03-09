@@ -2,6 +2,7 @@
 header("Access-Control-Allow-Origin: https://inaltera-frontend.vercel.app");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Content-Type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -27,7 +28,6 @@ $method = $_SERVER['REQUEST_METHOD'];
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // Limpieza de ruta
-$uri = str_replace('/Back_InAltera/public', '', $uri);
 $uri = str_replace('/index.php', '', $uri);
 $uri = rtrim($uri, '/');
 
