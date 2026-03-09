@@ -146,8 +146,17 @@ class InvoiceController {
             if (strtotime($data['fecha_emision']) === false) {
                 throw new Exception('Fecha inválida');
             }
-            if (strtotime($data['fecha_emision']) > time()) {
-                throw new Exception("La fecha no puede ser futura" . " fecha_emision: " . $data['fecha_emision']. " strtotime: " . strtotime($data['fecha_emision'] . "time(): " . time()) );
+            
+            $fecha = DateTime::createFromFormat(
+                'Y-m-d\TH:i',
+                $data['fecha_emision'],
+                new DateTimeZone('Europe/Madrid')
+            );
+
+            $ahora = new DateTime('now', new DateTimeZone('Europe/Madrid'));
+
+            if ($fecha > $ahora) {
+                throw new Exception("La fecha no puede ser futura");
             }
 
             if (!isset($data['lines']) || !is_array($data['lines']) || count($data['lines']) === 0) {
