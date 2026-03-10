@@ -24,6 +24,7 @@ require_once __DIR__ . '/../src/Controllers/ClientsController.php';
 require_once __DIR__ . '/../src/Controllers/XmlController.php';
 require_once __DIR__ . '/../src/Controllers/BillingController.php';
 require_once __DIR__ . '/../src/Controllers/SifController.php';
+require_once __DIR__ . '/../src/Utils/R2Storage.php';
 
 
 $method = $_SERVER['REQUEST_METHOD'];
