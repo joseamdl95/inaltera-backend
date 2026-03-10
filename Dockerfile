@@ -5,10 +5,16 @@ RUN apt-get update && apt-get install -y \
     ghostscript \
     git \
     unzip \
-    curl
+    curl \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev
+
+# configurar GD
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 
 # extensiones PHP necesarias
-RUN docker-php-ext-install mysqli pdo pdo_mysql
+RUN docker-php-ext-install mysqli pdo pdo_mysql gd
 
 # activar mod_rewrite
 RUN a2enmod rewrite
@@ -30,3 +36,6 @@ RUN composer install
 # permisos para storage
 RUN mkdir -p /var/www/html/storage
 RUN chmod -R 777 /var/www/html/storage
+
+# permisos para phpqrcode (evita error errors.txt)
+RUN chmod -R 777 /var/www/html/src/Utils/lib/phpqrcode
