@@ -2,8 +2,15 @@
 
 class AIService {
     // Tu clave que ya vimos que funciona
-    private static $apiKey = "AIzaSyAatNRmtQtxup3wltYkk3biz0Oqo5aDEWg"; 
-    
+     private static function getApiKey() {
+        $key = getenv("GEMINI_API_KEY");
+
+        if (!$key) {
+            throw new Exception("API key de Gemini no configurada");
+        }
+
+        return $key;
+    }
     // 🟢 CAMBIO: Usamos el modelo 2.0 que aparece en tu lista
     private static $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
     
@@ -77,7 +84,7 @@ class AIService {
             ]
         ];
 
-        $ch = curl_init(self::$apiUrl . "?key=" . self::$apiKey);
+        $ch = curl_init(self::$apiUrl . "?key=" . self::getApiKey());
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
