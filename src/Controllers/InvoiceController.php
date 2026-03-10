@@ -1007,8 +1007,8 @@ class InvoiceController {
                 throw new Exception("Factura no encontrada");
             }
 
-            if ($invoice['estado'] !== 'EMITIDA') {
-            throw new Exception("Factura no emitida");
+            if (!in_array($invoice['estado'], ['EMITIDA', 'ANULADA'])) {
+                throw new Exception("La factura debe estar EMITIDA o ANULADA");
             }
 
             if (empty($invoice['pdf_sellado'])) {
