@@ -893,11 +893,28 @@ class InvoiceController {
             $pathDestinoFisico = $outputDir . '/' . $nuevoNombreSellado;
 
             if ($isImported) {
-                // SELLAR EL PDF EXISTENTE
-                $pathOriginal = __DIR__ . '/../../' . $invoice['pdf_original'];
-                
-                // Pasamos la ruta de destino deseada al Sealer
-                $pdfPath = PdfInvoiceSealer::sealOriginal($pathOriginal, $pathDestinoFisico, ['hash_actual' => $hashActual], $qrPayload);
+
+                // descargar PDF desde R2 temporalmente
+                $tempOriginal = sys_get_temp_dir() . '/' . basename($invoice['pdf_original']);
+
+                file_put_contents(
+                    $tempOriginal,
+                    file_get_contents($invoice['pdf_original'])
+                );
+
+                // sellar el PDF descargado
+                $pdfPath = PdfInvoiceSealer::sealOriginal(
+                    $tempOriginal,
+                    $pathDestinoFisico,
+                    ['hash_actual' => $hashActual],
+                    $qrPayload
+                );
+
+                // eliminar temporal
+                if (file_exists($tempOriginal)) {
+                    unlink($tempOriginal);
+                }
+
             } else {
                 // GENERAR DESDE CERO
                 $pdfPath = PdfInvoiceGenerator::generate($invoice, $company, ['hash_actual' => $hashActual, 'sif' => $sif], $qrPayload);
