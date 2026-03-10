@@ -871,8 +871,11 @@ class InvoiceController {
             $xmlFullPath = $xmlDir . '/' . $xmlFilename;
 
             file_put_contents($xmlFullPath, $xml);
-            $xmlRelative = 'xml_emitidos/' . $xmlFilename;
 
+            $key = "xml_emitidos/" . $xmlFilename;
+            $xmlRelative = R2Storage::upload($xmlFullPath, $key);
+
+            unlink($xmlFullPath);
 
             
             // Generar PDF final
@@ -889,9 +892,6 @@ class InvoiceController {
             // Ruta completa para que el sistema escriba en el disco
             $pathDestinoFisico = $outputDir . '/' . $nuevoNombreSellado;
 
-            // Ruta relativa para guardar en la base de datos
-            $pdfRelative = 'storage/facturas_emitidas/' . $nuevoNombreSellado;
-
             if ($isImported) {
                 // SELLAR EL PDF EXISTENTE
                 $pathOriginal = __DIR__ . '/../../' . $invoice['pdf_original'];
@@ -904,9 +904,13 @@ class InvoiceController {
                 // (Asegúrate que Generator también guarde en la misma carpeta o mueve el archivo)
             }
 
-            // Convertir a ruta relativa
-            $pdfRelative = 'facturas_emitidas/' . basename($pdfPath);
+            // Convertir a ruta relativa y subir a R2
+            $key = "facturas_emitidas/" . basename($pdfPath);
+            $pdfRelative = R2Storage::upload($pdfPath, $key);
 
+            if (file_exists($pdfPath)) {
+                unlink($pdfPath);
+            }
             // Guardar ruta PDF y XML
             $stmt = $pdo->prepare("
                 UPDATE invoices
@@ -962,7 +966,6 @@ class InvoiceController {
         }
     }
 
-
     public static function downloadPdf($pdo){
         try {
 
@@ -991,28 +994,20 @@ class InvoiceController {
             throw new Exception("Factura no emitida");
             }
 
-            if (empty($invoice['pdf_sellado']) || !file_exists(__DIR__ . '/../../storage/' . $invoice['pdf_sellado'])) {
+            if (empty($invoice['pdf_sellado'])) {
                 throw new Exception("PDF sellado no disponible");
             }
 
-            // 📂 Ruta REAL en disco
-            $filePath = __DIR__ . '/../../storage/' . $invoice['pdf_sellado'];
-
-            $filename = basename($invoice['pdf_sellado']);
-
-            header('Content-Type: application/pdf');
-            header('Content-Disposition: attachment; filename="'.$filename.'"');
-            header('Content-Length: ' . filesize($filePath));
-            header('Access-Control-Expose-Headers: Content-Disposition');
+            $pdfUrl = $invoice['pdf_sellado'];
 
             crearLog(
                 $pdo,
                 $userId,
                 'PDF_DESCARGADO',
-                'Descarga PDF factura: ' . $invoice['pdf_sellado']
+                'Descarga PDF factura: ' . $pdfUrl
             );
 
-            readfile($filePath);
+            header("Location: " . $pdfUrl);
             exit;
 
         } catch (Exception $e) {
@@ -1082,28 +1077,16 @@ class InvoiceController {
                 throw new Exception("XML no disponible");
             }
 
-            // 🔹 Ruta real en disco
-            $filePath = __DIR__ . '/../../storage/' . $invoice['xml_sellado'];
-
-            if (!file_exists($filePath)) {
-                throw new Exception("Archivo XML no encontrado");
-            }
-
-            $filename = basename($filePath);
-
-            header('Content-Type: application/xml');
-            header('Content-Disposition: attachment; filename="'.$filename.'"');
-            header('Content-Length: ' . filesize($filePath));
-            header('Access-Control-Expose-Headers: Content-Disposition');
+            $xmlUrl = $invoice['xml_sellado'];
 
             crearLog(
                 $pdo,
                 $userId,
                 'XML_DESCARGADO',
-                'Descarga XML factura: ' . $invoice['xml_sellado']
+                'Descarga XML factura: ' . $xmlUrl
             );
 
-            readfile($filePath);
+            header("Location: " . $xmlUrl);
             exit;
 
         } catch (Exception $e) {
@@ -1173,28 +1156,16 @@ class InvoiceController {
                 throw new Exception("XML no disponible");
             }
 
-            // 🔹 Ruta real en disco
-            $filePath = __DIR__ . '/../../storage/' . $invoice['xml_anulado'];
-
-            if (!file_exists($filePath)) {
-                throw new Exception("Archivo XML no encontrado");
-            }
-
-            $filename = basename($filePath);
-
-            header('Content-Type: application/xml');
-            header('Content-Disposition: attachment; filename="'.$filename.'"');
-            header('Content-Length: ' . filesize($filePath));
-            header('Access-Control-Expose-Headers: Content-Disposition');
+            $xmlUrl = $invoice['xml_anulado'];
 
             crearLog(
                 $pdo,
                 $userId,
                 'XML_DESCARGADO',
-                'Descarga XML factura: ' . $invoice['xml_anulado']
+                'Descarga XML anulación factura: ' . $xmlUrl
             );
 
-            readfile($filePath);
+            header("Location: " . $xmlUrl);
             exit;
 
         } catch (Exception $e) {
@@ -1554,7 +1525,13 @@ class InvoiceController {
             $xmlFullPath = $xmlDir . '/' . $xmlFilename;
 
             file_put_contents($xmlFullPath, $xmlAnulacion);
-            $xmlRelative = 'xml_anulados/' . $xmlFilename;
+
+            $key = "xml_anulados/" . $xmlFilename;
+            $xmlRelative = R2Storage::upload($xmlFullPath, $key);
+
+            if (file_exists($xmlFullPath)) {
+                unlink($xmlFullPath);
+            }
 
             // 🔹 Actualizar estado funcional
             $stmt = $pdo->prepare("
@@ -1781,7 +1758,13 @@ class InvoiceController {
             }
 
             rename($tempPath, $finalPath);
-            $rutaRelativaBDD = "storage/pdfs_original/" . $finalFileName;
+
+            $key = "pdfs_original/" . $finalFileName;
+            $rutaRelativaBDD = R2Storage::upload($finalPath, $key);
+
+            if (file_exists($finalPath)) {
+                unlink($finalPath);
+            }
 
             $pdo->beginTransaction();
 
