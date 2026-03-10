@@ -25,6 +25,7 @@ class R2Storage {
             'Bucket' => getenv('R2_BUCKET'),
             'Key' => $key,
             'SourceFile' => $filePath,
+            'ContentDisposition' => 'attachment; filename="' . basename($key) . '"'
         ]);
 
         return getenv('R2_PUBLIC_URL') . '/' . $key;
