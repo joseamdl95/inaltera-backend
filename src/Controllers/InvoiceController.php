@@ -885,8 +885,6 @@ class InvoiceController {
                 mkdir($outputDir, 0777, true);
             }
 
-            $nombreArchivoOriginal = $invoice['pdf_original'] ? basename($invoice['pdf_original']) : null;
-            $nuevoNombreSellado = str_replace(['BORRADOR_', 'import_'], '', $nombreArchivoOriginal);
             $nuevoNombreSellado = 'factura_' . $company['nif'] . '_' . $numeroFactura . '.pdf'; // Nombre limpio y profesional
 
             // Ruta completa para que el sistema escriba en el disco
