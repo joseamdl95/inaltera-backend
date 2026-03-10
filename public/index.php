@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../vendor/autoload.php';
 date_default_timezone_set('Europe/Madrid');
 header("Access-Control-Allow-Origin: https://inaltera-frontend.vercel.app");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
