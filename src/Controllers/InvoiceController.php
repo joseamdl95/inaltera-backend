@@ -1024,7 +1024,9 @@ class InvoiceController {
                 'Descarga PDF factura: ' . $pdfUrl
             );
 
-            header("Location: " . $pdfUrl);
+            echo json_encode([
+                "url" => $invoice['pdf_sellado']
+            ]);
             exit;
 
         } catch (Exception $e) {
@@ -1103,7 +1105,9 @@ class InvoiceController {
                 'Descarga XML factura: ' . $xmlUrl
             );
 
-            header("Location: " . $xmlUrl);
+            echo json_encode([
+                "url" => $xmlUrl
+            ]);
             exit;
 
         } catch (Exception $e) {
@@ -1182,8 +1186,9 @@ class InvoiceController {
                 'Descarga XML anulación factura: ' . $xmlUrl
             );
 
-            header("Location: " . $xmlUrl);
-            exit;
+            echo json_encode([
+                "url" => $xmlUrl
+            ]);
 
         } catch (Exception $e) {
 
