@@ -82,16 +82,28 @@ class InvoiceController {
         ]);
     }
 
-    public static function getById($pdo, $id) {
+    public static function getById(PDO $pdo, $id) {
 
         $stmt = $pdo->prepare("
-            SELECT *
-            FROM invoices
-            WHERE id = ?
+            SELECT
+                i.*,
+                c.nombre AS cliente_nombre,
+                c.nif AS cliente_nif,
+                c.direccion AS cliente_direccion,
+                c.pais AS cliente_pais,
+
+                s.alias AS sif_alias,
+                s.software_nombre,
+                s.version
+
+            FROM invoices i
+            JOIN clients c ON c.id = i.client_id
+            LEFT JOIN sif_configs s ON s.id = i.sif_id
+            WHERE i.id = :id
             LIMIT 1
         ");
 
-        $stmt->execute([$id]);
+        $stmt->execute(['id' => $id]);
 
         $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -101,15 +113,24 @@ class InvoiceController {
             return;
         }
 
-        $stmtLines = $pdo->prepare("
-            SELECT *
+        $stmt = $pdo->prepare("
+            SELECT
+                descripcion,
+                cantidad,
+                precio_unitario,
+                base_imponible,
+                iva_tipo,
+                iva_cuota,
+                irpf_porcentaje,
+                cuota_irpf
             FROM invoice_lines
-            WHERE invoice_id = ?
+            WHERE invoice_id = :id
+            ORDER BY descripcion
         ");
 
-        $stmtLines->execute([$id]);
+        $stmt->execute(['id' => $id]);
 
-        $lines = $stmtLines->fetchAll(PDO::FETCH_ASSOC);
+        $lines = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         echo json_encode([
             "invoice" => $invoice,
