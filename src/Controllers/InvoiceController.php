@@ -82,6 +82,40 @@ class InvoiceController {
         ]);
     }
 
+    public static function getById($pdo, $id) {
+
+        $stmt = $pdo->prepare("
+            SELECT *
+            FROM invoices
+            WHERE id = ?
+            LIMIT 1
+        ");
+
+        $stmt->execute([$id]);
+
+        $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$invoice) {
+            http_response_code(404);
+            echo json_encode(["error" => "Factura no encontrada"]);
+            return;
+        }
+
+        $stmtLines = $pdo->prepare("
+            SELECT *
+            FROM invoice_lines
+            WHERE invoice_id = ?
+        ");
+
+        $stmtLines->execute([$id]);
+
+        $lines = $stmtLines->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            "invoice" => $invoice,
+            "lines" => $lines
+        ]);
+    }
 
     public static function create(PDO $pdo) {
         $pdo->beginTransaction();

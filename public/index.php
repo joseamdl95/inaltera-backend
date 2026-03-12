@@ -189,6 +189,12 @@ if ($uri === '/invoices') {
     exit;
 }
 
+if (preg_match('#^/invoices/([0-9]+)$#', $uri, $matches) && $method === 'GET') {
+    $id = $matches[1];
+    InvoiceController::getById($pdo, $id);
+    exit;
+}
+
 if (preg_match('#^/invoices/numero/(.+)$#', $uri, $matches) && $method === 'GET') {
     $numero = trim($matches[1]);
     InvoiceController::getByNumero($pdo, $numero);
