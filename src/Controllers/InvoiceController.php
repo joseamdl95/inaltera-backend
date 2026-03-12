@@ -533,6 +533,166 @@ class InvoiceController {
         }  
     }
 
+    public static function update(PDO $pdo, $id) {
+
+        $pdo->beginTransaction();
+
+        try {
+
+            $userId = Auth::check();
+
+            $data = json_decode(file_get_contents("php://input"), true);
+
+            // comprobar factura
+            $stmt = $pdo->prepare("
+                SELECT *
+                FROM invoices
+                WHERE id = :id
+            ");
+
+            $stmt->execute(["id" => $id]);
+
+            $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$invoice) {
+                throw new Exception("Factura no encontrada");
+            }
+
+            if ($invoice["estado"] !== "BORRADOR") {
+                throw new Exception("Solo se pueden editar borradores");
+            }
+
+            // actualizar datos cliente si cambian
+            $stmt = $pdo->prepare("
+                UPDATE clients
+                SET
+                    nombre = :nombre,
+                    direccion = :direccion,
+                    pais = :pais
+                WHERE id = :client_id
+            ");
+
+            $stmt->execute([
+                "nombre" => $data["cliente_nombre"],
+                "direccion" => $data["cliente_direccion"],
+                "pais" => $data["cliente_pais"],
+                "client_id" => $invoice["client_id"]
+            ]);
+
+            // borrar líneas antiguas
+            $stmt = $pdo->prepare("
+                DELETE FROM invoice_lines
+                WHERE invoice_id = :id
+            ");
+
+            $stmt->execute(["id" => $id]);
+
+            $base = 0;
+            $iva = 0;
+            $irpf = 0;
+
+            foreach ($data["lines"] as $line) {
+
+                $lineId = uuidv4();
+
+                $cantidad = (float)$line["cantidad"];
+                $precio = (float)$line["precio_unitario"];
+                $baseLinea = $cantidad * $precio;
+
+                $ivaTipo = (float)$line["iva"];
+                $irpfTipo = (float)($line["irpf"] ?? 0);
+
+                $ivaCuota = round($baseLinea * $ivaTipo / 100, 2);
+                $irpfCuota = round($baseLinea * $irpfTipo / 100, 2);
+
+                $base += $baseLinea;
+                $iva += $ivaCuota;
+                $irpf += $irpfCuota;
+
+                $stmt = $pdo->prepare("
+                    INSERT INTO invoice_lines
+                    (
+                        id,
+                        invoice_id,
+                        descripcion,
+                        cantidad,
+                        precio_unitario,
+                        base_imponible,
+                        iva_tipo,
+                        iva_cuota,
+                        irpf_porcentaje,
+                        cuota_irpf
+                    )
+                    VALUES
+                    (
+                        :id,
+                        :invoice_id,
+                        :descripcion,
+                        :cantidad,
+                        :precio,
+                        :base,
+                        :iva,
+                        :cuota_iva,
+                        :irpf,
+                        :cuota_irpf
+                    )
+                ");
+
+                $stmt->execute([
+                    "id" => $lineId,
+                    "invoice_id" => $id,
+                    "descripcion" => $line["concepto"],
+                    "cantidad" => $cantidad,
+                    "precio" => $precio,
+                    "base" => $baseLinea,
+                    "iva" => $ivaTipo,
+                    "cuota_iva" => $ivaCuota,
+                    "irpf" => $irpfTipo,
+                    "cuota_irpf" => $irpfCuota
+                ]);
+            }
+
+            $total = $base + $iva - $irpf;
+
+            $stmt = $pdo->prepare("
+                UPDATE invoices
+                SET
+                    fecha_emision = :fecha,
+                    base_imponible = :base,
+                    cuota_iva = :iva,
+                    cuota_irpf = :irpf,
+                    total = :total
+                WHERE id = :id
+            ");
+
+            $stmt->execute([
+                "fecha" => $data["fecha_emision"],
+                "base" => $base,
+                "iva" => $iva,
+                "irpf" => $irpf,
+                "total" => $total,
+                "id" => $id
+            ]);
+
+            $pdo->commit();
+
+            echo json_encode([
+                "ok" => true,
+                "invoice_id" => $id
+            ]);
+
+        } catch (Throwable $e) {
+
+            $pdo->rollBack();
+
+            http_response_code(500);
+
+            echo json_encode([
+                "error" => $e->getMessage()
+            ]);
+        }
+    }
+
     public static function emit(PDO $pdo) {
         $userId = Auth::check();
 
