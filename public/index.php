@@ -244,7 +244,7 @@ if ($uri === '/invoices/anularBorrador' && $method === 'POST') {
     exit;
 }
 
-if ($uri === '/public/verificar' && $method === 'GET') {
+if (preg_match('#^/public/verificar#', $uri) && $method === 'GET') {
     InvoiceController::verificarPublico($pdo);
     exit;
 }
