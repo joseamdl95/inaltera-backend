@@ -2153,10 +2153,12 @@ class InvoiceController {
         return;
     }
 
+    $fechaFactura = self::isoDate($factura['fecha_emision']);
+
     // 1️⃣ verificar datos QR
     $datosValidos =
         $factura['company_nif'] === $nif &&
-        $factura['fecha_emision'] === $fecha &&
+        $fechaFactura === $fecha &&
         number_format((float)$factura['cuota_iva'], 2, '.', '') === $iva &&
         number_format((float)$factura['total'], 2, '.', '') === $total;
 
