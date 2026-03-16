@@ -2168,6 +2168,13 @@ class InvoiceController {
     // 3️⃣ verificar cadena completa
     $cadenaCheck = verificarIntegridadFacturas($pdo, $factura['company_id']);
 
+    $dom = new DOMDocument();
+    $dom->preserveWhiteSpace = false;
+    $dom->formatOutput = true;
+    $dom->loadXML($factura['xml_content']);
+
+$xmlPretty = $dom->saveXML();
+
     echo json_encode([
         'ok' => true,
         'datos_qr_validos' => $datosValidos,
@@ -2178,7 +2185,7 @@ class InvoiceController {
             'fecha' => $factura['fecha_emision'],
             'total' => $factura['total']
         ],
-        'xml' => $factura['xml_content']
+        'xml' => $xmlPretty
     ]);
 }
 }
