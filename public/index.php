@@ -244,6 +244,11 @@ if ($uri === '/invoices/anularBorrador' && $method === 'POST') {
     exit;
 }
 
+if ($uri === '/public/verificar' && $method === 'GET') {
+    InvoiceController::verificarPublico($pdo);
+    exit;
+}
+
 if($uri ==='/xml/verificar' && $method === 'POST'){
     XmlController::verificar($pdo);
     exit;

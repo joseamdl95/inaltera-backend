@@ -901,14 +901,15 @@ class InvoiceController {
 
 
         // Generar payload QR
-            $qrPayload = implode('|', [
+        $qrPayload = "https://inaltera-frontend.vercel.app/verificar?data=" .
+            urlencode(implode('|', [
                 $company['nif'],
                 $numeroFactura,
                 self::isoDate($invoice['fecha_emision']),
                 number_format((float)$invoice['cuota_iva'], 2, '.', ''),
                 number_format((float)$invoice['total'], 2, '.', ''),
                 $hashActual
-            ]);
+        ]));
 
         $pdo->beginTransaction();
 
@@ -2112,4 +2113,70 @@ class InvoiceController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+    public static function verificarPublico(PDO $pdo)
+{
+    $payload = $_GET['data'] ?? null;
+
+    if (!$payload) {
+        http_response_code(400);
+        echo json_encode(['error' => 'QR inválido']);
+        return;
+    }
+
+    list($nif, $numero, $fecha, $iva, $total, $hashQr) = explode('|', $payload);
+
+    $stmt = $pdo->prepare("
+        SELECT
+            i.*,
+            c.nif AS company_nif,
+            r.hash_actual,
+            r.hash_anterior,
+            r.cadena_hash,
+            r.xml_content
+        FROM invoices i
+        JOIN companies c ON c.id = i.company_id
+        JOIN invoice_records r ON r.invoice_id = i.id
+        WHERE i.numero = :numero
+        LIMIT 1
+    ");
+
+    $stmt->execute(['numero' => $numero]);
+
+    $factura = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$factura) {
+        echo json_encode([
+            'ok' => false,
+            'error' => 'Factura no encontrada'
+        ]);
+        return;
+    }
+
+    // 1️⃣ verificar datos QR
+    $datosValidos =
+        $factura['company_nif'] === $nif &&
+        $factura['fecha_emision'] === $fecha &&
+        number_format((float)$factura['cuota_iva'], 2, '.', '') === $iva &&
+        number_format((float)$factura['total'], 2, '.', '') === $total;
+
+    // 2️⃣ verificar hash
+    $hashValido = $factura['hash_actual'] === $hashQr;
+
+    // 3️⃣ verificar cadena completa
+    $cadenaCheck = verificarIntegridadFacturas($pdo, $factura['company_id']);
+
+    echo json_encode([
+        'ok' => true,
+        'datos_qr_validos' => $datosValidos,
+        'hash_valido' => $hashValido,
+        'cadena_integra' => $cadenaCheck['ok'],
+        'factura' => [
+            'numero' => $factura['numero'],
+            'fecha' => $factura['fecha_emision'],
+            'total' => $factura['total']
+        ],
+        'xml' => $factura['xml_content']
+    ]);
+}
 }
