@@ -748,7 +748,7 @@ class InvoiceController {
 
         // Obtener empresa del usuario
         $stmt = $pdo->prepare("
-            SELECT id, razon_social, nif, direccion, pais
+            SELECT id, razon_social, nif, direccion, pais, logo_url
             FROM companies
             WHERE user_id = :user_id
         ");
