@@ -24,37 +24,33 @@ class PdfInvoiceGenerator {
         if (!empty($company['logo_url'])) {
             try {
 
-                $ext = strtolower(pathinfo(parse_url($company['logo_url'], PHP_URL_PATH), PATHINFO_EXTENSION));
-                if (!in_array($ext, ['jpg','jpeg','png'])) {
-                    $ext = 'png';
-                }
+                $tmpPng = sys_get_temp_dir() . '/logo_' . uniqid() . '.png';
+                $tmpJpg = sys_get_temp_dir() . '/logo_' . uniqid() . '.jpg';
 
-                $tmpLogo = sys_get_temp_dir() . '/logo_' . uniqid() . '.' . $ext;
+                $logoContent = file_get_contents($company['logo_url']);
+                file_put_contents($tmpPng, $logoContent);
 
-                $logoContent = @file_get_contents($company['logo_url']);
+                // 🔥 convertir a JPG (clave)
+                $image = @imagecreatefrompng($tmpPng);
 
-                if ($logoContent === false) {
-                    error_log("❌ No se pudo descargar logo");
+                if ($image !== false) {
+                    imagejpeg($image, $tmpJpg, 90);
+                    imagedestroy($image);
+
+                    $pdf->Image($tmpJpg, 10, 10, 40);
                 } else {
-
-                    file_put_contents($tmpLogo, $logoContent);
-
-                    if (file_exists($tmpLogo)) {
-                        error_log("✅ TMP LOGO OK");
-                        $pdf->Image($tmpLogo, 10, 10, 40);
-                    } else {
-                        error_log("❌ TMP LOGO NO EXISTE");
-                    }
-
-                    unlink($tmpLogo);
+                    error_log("❌ No se pudo convertir PNG");
                 }
 
-                $pdf->SetY(50);
+                unlink($tmpPng);
+                if (file_exists($tmpJpg)) unlink($tmpJpg);
 
             } catch (Exception $e) {
                 error_log("ERROR LOGO: " . $e->getMessage());
             }
         }
+
+        $pdf->SetY(50);
 
         
 
