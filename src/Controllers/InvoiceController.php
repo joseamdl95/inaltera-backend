@@ -1089,7 +1089,7 @@ class InvoiceController {
             file_put_contents($xmlFullPath, $xml);
 
             $key = "xml_emitidos/" . $xmlFilename;
-            $xmlRelative = R2Storage::upload($xmlFullPath, $key);
+            $xmlRelative = R2Storage::upload($xmlFullPath, $key, ['download' => true]);
 
             unlink($xmlFullPath);
 
@@ -1137,7 +1137,7 @@ class InvoiceController {
 
             // Convertir a ruta relativa y subir a R2
             $key = "facturas_emitidas/" . basename($pdfPath);
-            $pdfRelative = R2Storage::upload($pdfPath, $key);
+            $pdfRelative = R2Storage::upload($pdfPath, $key );
 
             if (file_exists($pdfPath)) {
                 unlink($pdfPath);
@@ -1763,7 +1763,7 @@ class InvoiceController {
             file_put_contents($xmlFullPath, $xmlAnulacion);
 
             $key = "xml_anulados/" . $xmlFilename;
-            $xmlRelative = R2Storage::upload($xmlFullPath, $key);
+            $xmlRelative = R2Storage::upload($xmlFullPath, $key, ['download' => true]);
 
             if (file_exists($xmlFullPath)) {
                 unlink($xmlFullPath);

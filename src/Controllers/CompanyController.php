@@ -93,7 +93,7 @@ class CompanyController {
             if (
                 empty(trim($data['razon_social'] ?? '')) ||
                 empty(trim($data['nif'] ?? ''))
-            ) {
+            ){
                 http_response_code(400);
                 throw new Exception('Datos incompletos');
                 return;
@@ -145,21 +145,78 @@ class CompanyController {
 
             echo json_encode(['ok' => true]);
         
-    }catch (Throwable $e) {
-        crearLog(
-            $pdo,
-            $userId ?? null,
-            'ERROR_EMPRESA_UPDATE',
-            $e->getMessage()
-        );
+        }catch (Throwable $e) {
+            crearLog(
+                $pdo,
+                $userId ?? null,
+                'ERROR_EMPRESA_UPDATE',
+                $e->getMessage()
+            );
 
-        if (http_response_code() === 200) {
-            http_response_code(500);
+            if (http_response_code() === 200) {
+                http_response_code(500);
+            }
+
+            echo json_encode([
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public static function uploadLogo(PDO $pdo) {
+
+        $userId = Auth::check();
+
+        if (!isset($_FILES['logo'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'No file']);
+            return;
         }
 
+        $file = $_FILES['logo'];
+
+        // 🔒 Validaciones
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            throw new Exception("Error al subir archivo");
+        }
+
+        if ($file['size'] > 2 * 1024 * 1024) {
+            throw new Exception("El logo no puede superar 2MB");
+        }
+
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+        if (!in_array($ext, ['png', 'jpg', 'jpeg'])) {
+            throw new Exception("Formato no permitido (solo PNG/JPG)");
+        }
+
+        // 📁 generar nombre único
+        $filename = 'logos/' . uniqid() . '.' . $ext;
+
+        // 🚀 usar TU clase R2Storage (IMPORTANTE)
+        $url = R2Storage::upload($file['tmp_name'], $filename);
+
+        // 💾 guardar en BD
+        $stmt = $pdo->prepare("
+            UPDATE companies
+            SET logo_url = :logo
+            WHERE user_id = :user
+        ");
+
+        $stmt->execute([
+            'logo' => $url,
+            'user' => $userId
+        ]);
+
+        crearLog(
+                $pdo,
+                $userId,
+                'EMPRESA_MODIFICADA',
+                'Logo actualizado: ' . $file['name'] . ')'
+            );
+
         echo json_encode([
-            'error' => $e->getMessage()
+            'logo_url' => $url
         ]);
     }
-}
 }

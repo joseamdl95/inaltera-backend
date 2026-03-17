@@ -17,16 +17,23 @@ class R2Storage {
         ]);
     }
 
-    public static function upload($filePath, $key) {
+    public static function upload($filePath, $key, $options = []) {
 
         $client = self::client();
 
-        $client->putObject([
+        $params = [
             'Bucket' => getenv('R2_BUCKET'),
             'Key' => $key,
             'SourceFile' => $filePath,
-            'ContentDisposition' => 'attachment; filename="' . basename($key) . '"'
-        ]);
+            'ContentType' => mime_content_type($filePath),
+        ];
+
+        // 👇 si quieres forzar descarga
+        if (!empty($options['download'])) {
+            $params['ContentDisposition'] = 'attachment; filename="' . basename($key) . '"';
+        }
+
+        $client->putObject($params);
 
         return getenv('R2_PUBLIC_URL') . '/' . $key;
     }
