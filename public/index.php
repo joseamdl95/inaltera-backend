@@ -117,6 +117,11 @@ if ($uri === '/company') {
     exit;
 }
 
+if ($uri === '/company/upload-logo' && $method === 'POST') {
+    CompanyController::uploadLogo($pdo);
+    exit;
+}
+
 if($uri === '/sif'){
     if($method ==='POST'){
         SifController::store($pdo);
