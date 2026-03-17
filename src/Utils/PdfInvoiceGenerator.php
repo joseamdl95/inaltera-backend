@@ -20,6 +20,28 @@ class PdfInvoiceGenerator {
         $pdf = new FPDF();
         $pdf->AddPage();
 
+        // 🔥 LOGO EMPRESA
+        if (!empty($company['logo_url'])) {
+            try {
+
+                $tmpLogo = sys_get_temp_dir() . '/logo_' . uniqid() . '.png';
+
+                // Descargar logo desde R2
+                file_put_contents($tmpLogo, file_get_contents($company['logo_url']));
+
+                // Insertar en PDF
+                $pdf->Image($tmpLogo, 10, 10, 40); // x, y, width
+
+                // limpiar
+                unlink($tmpLogo);
+
+            } catch (Exception $e) {
+                // si falla, no rompe el PDF
+            }
+        }
+
+        $pdf->Ln($company['logo_url'] ? 35 : 10);
+
         // Empresa
         $pdf->SetFont('Arial','B',14);
         $pdf->Cell(0,10,self::txt($company['razon_social']),0,1);
@@ -141,7 +163,7 @@ class PdfInvoiceGenerator {
         $pdf->MultiCell(0,5,self::txt('Hash: '.$record['hash_actual']));
 
         // QR
-        $pdf->Image($tmpQr, 150, 20, 40);
+        $pdf->Image($tmpQr, 150, 50, 40);
 
         unlink($tmpQr);
 
