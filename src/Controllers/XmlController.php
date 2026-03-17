@@ -7,26 +7,9 @@ class XmlController {
 
     public static function verificar(PDO $pdo) {
 
-        $userId = Auth::check();
-
-        $logsIntegrity = verificarIntegridadLogs($pdo, $userId);
+        $userId = null;
 
         try {
-
-            // Empresa del usuario
-            $stmt = $pdo->prepare("
-                SELECT id, nif 
-                FROM companies 
-                WHERE user_id = :user_id
-            ");
-
-            $stmt->execute(['user_id' => $userId]);
-            $company = $stmt->fetch();
-
-            if (!$company) {
-                http_response_code(404);
-                throw new Exception('Empresa no configurada');
-            }
 
             if (!isset($_FILES['xmls'])) {
                 http_response_code(400);
@@ -39,6 +22,20 @@ class XmlController {
             foreach ($archivos['tmp_name'] as $key => $tmpName) {
 
                 $xmlContent = file_get_contents($tmpName);
+                libxml_use_internal_errors(true);
+                $dom = new DOMDocument();
+                $dom->loadXML($xmlContent);
+
+                // 🔹 AJUSTA LA RUTA A TU XSD
+                $xsdPath = __DIR__ . '/../../xsd/noverifactu_v1.xsd';
+
+                $estructuraValida = $dom->schemaValidate($xsdPath);
+
+                if (!$estructuraValida) {
+                    $errores = libxml_get_errors();
+                    libxml_clear_errors();
+                }
+
                 $xml = simplexml_load_string($xmlContent);
                 $nombreArchivo = $archivos['name'][$key];
                 
@@ -74,27 +71,44 @@ class XmlController {
 
                 $hashCalculado = hash('sha256', $cadenaParaVerificar);
 
-                $esIntegro = ($hashCalculado === $hashActualXml);
-                $esDeMiEmpresa = ($nifEmisor === $company['nif']);
+                $hashCorrecto = ($hashCalculado === $hashActualXml);
+
+                $stmtCompany = $pdo->prepare("
+                    SELECT id 
+                    FROM companies 
+                    WHERE nif = :nif
+                    LIMIT 1
+                ");
+
+                $stmtCompany->execute([
+                    'nif' => $nifEmisor
+                ]);
+
+                $company = $stmtCompany->fetch();
+
+                $companyId = $company ? $company['id'] : null;
+
+                $cadenaGlobalOk = null;
+
+                if ($companyId) {
+                    $check = verificarIntegridadFacturas($pdo, $companyId);
+                    $cadenaGlobalOk = $check['ok'];
+                }
+                
 
                 $existeEnBBDD = false;
                 $coincideConBBDD = false;
 
-                if ($esDeMiEmpresa) {
-
                     $sql = "
                         SELECT r.xml_content
                         FROM invoice_records r
-                        INNER JOIN invoices i ON r.invoice_id = i.id
                         WHERE r.hash_actual = :hash
-                        AND i.company_id = :company_id
                     ";
 
                     $stmtDb = $pdo->prepare($sql);
 
                     $stmtDb->execute([
-                        'hash' => $hashActualXml,
-                        'company_id' => $company['id']
+                        'hash' => $hashActualXml
                     ]);
 
                     $invoice = $stmtDb->fetch();
@@ -110,14 +124,15 @@ class XmlController {
 
                         $coincideConBBDD = ($xmlSubido->C14N() === $xmlDb->C14N());
                     }
-                }
+        
 
                 $resultados[] = [
                     'sif'=> $versionSif,
                     'archivo' => $nombreArchivo,
                     'numero' => $numeroFactura,
-                    'integro' => $esIntegro,
-                    'empresa_correcta' => $esDeMiEmpresa,
+                    'xml_valido' => $estructuraValida,
+                    'hashCorrecto' => $hashCorrecto,
+                    'cadena_integra' => $cadenaGlobalOk,
                     'registrado' => $existeEnBBDD,
                     'coincide_BBDD' => $coincideConBBDD
                 ];
@@ -134,7 +149,6 @@ class XmlController {
             );
 
             echo json_encode([
-                'logs_integrity' => $logsIntegrity['ok'],
                 'resultados' => $resultados
             ]);
 

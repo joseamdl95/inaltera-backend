@@ -1967,7 +1967,7 @@ class InvoiceController {
 
             // 3. IA: Extracción de datos (Forzamos la extracción del número)
             $dataIA = AIService::extractInvoiceData($tempPath);
-
+            
             
             $rectificadaNum = $dataIA['factura_rectificada_num'] ?? null;
 
@@ -2114,78 +2114,77 @@ class InvoiceController {
         }
     }
 
-    public static function verificarPublico(PDO $pdo)
-{
-    $payload = $_GET['data'] ?? null;
+    public static function verificarPublico(PDO $pdo){
+        $payload = $_GET['data'] ?? null;
 
-    if (!$payload) {
-        http_response_code(400);
-        echo json_encode(['error' => 'QR inválido']);
-        return;
-    }
+        if (!$payload) {
+            http_response_code(400);
+            echo json_encode(['error' => 'QR inválido']);
+            return;
+        }
 
-    list($nif, $numero, $fecha, $iva, $total, $hashQr) = explode('|', $payload);
+        list($nif, $numero, $fecha, $iva, $total, $hashQr) = explode('|', $payload);
 
-    $stmt = $pdo->prepare("
-        SELECT
-            i.*,
-            c.nif AS company_nif,
-            r.hash_actual,
-            r.hash_anterior,
-            r.cadena_hash,
-            r.xml_content
-        FROM invoices i
-        JOIN companies c ON c.id = i.company_id
-        JOIN invoice_records r ON r.invoice_id = i.id
-        WHERE i.numero = :numero
-        LIMIT 1
-    ");
+        $stmt = $pdo->prepare("
+            SELECT
+                i.*,
+                c.nif AS company_nif,
+                r.hash_actual,
+                r.hash_anterior,
+                r.cadena_hash,
+                r.xml_content
+            FROM invoices i
+            JOIN companies c ON c.id = i.company_id
+            JOIN invoice_records r ON r.invoice_id = i.id
+            WHERE i.numero = :numero
+            LIMIT 1
+        ");
 
-    $stmt->execute(['numero' => $numero]);
+        $stmt->execute(['numero' => $numero]);
 
-    $factura = $stmt->fetch(PDO::FETCH_ASSOC);
+        $factura = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$factura) {
+        if (!$factura) {
+            echo json_encode([
+                'ok' => false,
+                'error' => 'Factura no encontrada'
+            ]);
+            return;
+        }
+
+        $fechaFactura = self::isoDate($factura['fecha_emision']);
+
+        // 1️⃣ verificar datos QR
+        $datosValidos =
+            $factura['company_nif'] === $nif &&
+            $fechaFactura === $fecha &&
+            number_format((float)$factura['cuota_iva'], 2, '.', '') === $iva &&
+            number_format((float)$factura['total'], 2, '.', '') === $total;
+
+        // 2️⃣ verificar hash
+        $hashValido = $factura['hash_actual'] === $hashQr;
+
+        // 3️⃣ verificar cadena completa
+        $cadenaCheck = verificarIntegridadFacturas($pdo, $factura['company_id']);
+
+        $dom = new DOMDocument();
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = true;
+        $dom->loadXML($factura['xml_content']);
+
+        $xmlPretty = $dom->saveXML();
+
         echo json_encode([
-            'ok' => false,
-            'error' => 'Factura no encontrada'
+            'ok' => true,
+            'datos_qr_validos' => $datosValidos,
+            'hash_valido' => $hashValido,
+            'cadena_integra' => $cadenaCheck['ok'],
+            'factura' => [
+                'numero' => $factura['numero'],
+                'fecha' => $factura['fecha_emision'],
+                'total' => $factura['total']
+            ],
+            'xml' => $xmlPretty
         ]);
-        return;
     }
-
-    $fechaFactura = self::isoDate($factura['fecha_emision']);
-
-    // 1️⃣ verificar datos QR
-    $datosValidos =
-        $factura['company_nif'] === $nif &&
-        $fechaFactura === $fecha &&
-        number_format((float)$factura['cuota_iva'], 2, '.', '') === $iva &&
-        number_format((float)$factura['total'], 2, '.', '') === $total;
-
-    // 2️⃣ verificar hash
-    $hashValido = $factura['hash_actual'] === $hashQr;
-
-    // 3️⃣ verificar cadena completa
-    $cadenaCheck = verificarIntegridadFacturas($pdo, $factura['company_id']);
-
-    $dom = new DOMDocument();
-    $dom->preserveWhiteSpace = false;
-    $dom->formatOutput = true;
-    $dom->loadXML($factura['xml_content']);
-
-$xmlPretty = $dom->saveXML();
-
-    echo json_encode([
-        'ok' => true,
-        'datos_qr_validos' => $datosValidos,
-        'hash_valido' => $hashValido,
-        'cadena_integra' => $cadenaCheck['ok'],
-        'factura' => [
-            'numero' => $factura['numero'],
-            'fecha' => $factura['fecha_emision'],
-            'total' => $factura['total']
-        ],
-        'xml' => $xmlPretty
-    ]);
-}
 }
