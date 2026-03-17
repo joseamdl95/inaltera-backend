@@ -24,23 +24,39 @@ class PdfInvoiceGenerator {
         if (!empty($company['logo_url'])) {
             try {
 
-                $tmpLogo = sys_get_temp_dir() . '/logo_' . uniqid() . '.png';
+                $ext = strtolower(pathinfo(parse_url($company['logo_url'], PHP_URL_PATH), PATHINFO_EXTENSION));
+                if (!in_array($ext, ['jpg','jpeg','png'])) {
+                    $ext = 'png';
+                }
 
-                // Descargar logo desde R2
-                file_put_contents($tmpLogo, file_get_contents($company['logo_url']));
+                $tmpLogo = sys_get_temp_dir() . '/logo_' . uniqid() . '.' . $ext;
 
-                // Insertar en PDF
-                $pdf->Image($tmpLogo, 10, 10, 40); // x, y, width
+                $logoContent = @file_get_contents($company['logo_url']);
 
-                // limpiar
-                unlink($tmpLogo);
+                if ($logoContent === false) {
+                    error_log("❌ No se pudo descargar logo");
+                } else {
+
+                    file_put_contents($tmpLogo, $logoContent);
+
+                    if (file_exists($tmpLogo)) {
+                        error_log("✅ TMP LOGO OK");
+                        $pdf->Image($tmpLogo, 10, 10, 40);
+                    } else {
+                        error_log("❌ TMP LOGO NO EXISTE");
+                    }
+
+                    unlink($tmpLogo);
+                }
+
+                $pdf->SetY(50);
 
             } catch (Exception $e) {
-                // si falla, no rompe el PDF
+                error_log("ERROR LOGO: " . $e->getMessage());
             }
         }
 
-        $pdf->Ln($company['logo_url'] ? 35 : 10);
+        
 
         // Empresa
         $pdf->SetFont('Arial','B',14);
