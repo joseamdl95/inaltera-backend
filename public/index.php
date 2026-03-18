@@ -159,14 +159,14 @@ if ($uri === '/clients') {
         ClientsController::store($pdo);
     }
 
-    if (preg_match('#^/clients/([a-zA-Z0-9\-]+)$#', $uri, $matches)) {
-        $id = $matches[1];
+    exit;
+}
 
-        if ($method === 'PUT') {
-            ClientsController::update($pdo, $id);
-        }
+if (preg_match('#^/clients/([a-zA-Z0-9\-]+)$#', $uri, $matches)) {
+    $id = $matches[1];
 
-        exit;
+    if ($method === 'PUT') {
+        ClientsController::update($pdo, $id);
     }
 
     exit;
