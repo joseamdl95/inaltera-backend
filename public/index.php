@@ -34,6 +34,7 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri = str_replace('/index.php', '', $uri);
 $uri = rtrim($uri, '/');
 
+
 if ($uri === '/ping' && $method === 'GET') {
     echo json_encode([
         'status' => 'ok',
@@ -162,7 +163,7 @@ if ($uri === '/clients') {
     exit;
 }
 
-if (preg_match('#^/clients/([a-zA-Z0-9\-]+)$#', $uri, $matches)) {
+if (preg_match('#^/clients/([a-f0-9\-]+)$#i', $uri, $matches)) {
     $id = $matches[1];
 
     if ($method === 'PUT') {

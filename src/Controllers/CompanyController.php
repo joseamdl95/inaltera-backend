@@ -16,7 +16,8 @@ class CompanyController {
                 razon_social,
                 nif,
                 direccion,
-                pais
+                pais,
+                logo_url
             FROM companies
             WHERE user_id = :user_id
         ");

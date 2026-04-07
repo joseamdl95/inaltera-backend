@@ -1,11 +1,10 @@
 <?php
 
-$host = 'centerbeam.proxy.rlwy.net';
-$port = 45311;
-$db   = 'railway';
-$user = 'root';
-$pass = 'jpNMCjkXGUawJHnJcwcUphoGTgSwzhGn';
-$charset = 'utf8mb4';
+$host = getenv('DB_HOST');
+$port = getenv('DB_PORT');
+$db   = getenv('DB_NAME');
+$user = getenv('DB_USER');
+$pass = getenv('DB_PASSWORD');
 
 $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
 
