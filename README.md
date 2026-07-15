@@ -13,42 +13,33 @@ API REST para la gestión de facturación electrónica con enfoque en inmutabili
 ## Instalación local
 
 1. Clona el repositorio:
-   ```bash
+
    git clone https://github.com/joseamdl95/Verifactu_Back.git
-Copia el archivo de entorno y ajusta tus credenciales:
 
-bash
-cp .env.example .env
-Edita .env con los datos de tu base de datos MySQL.
+2.Copia el archivo de entorno y ajusta tus credenciales:
 
-Importa la estructura de la base de datos:
+   cp .env.example .env
+   Edita .env con los datos de tu base de datos MySQL.
 
-Ejecuta database.sql en tu gestor (phpMyAdmin, MySQL Workbench, etc.)
+3.Importa la estructura de la base de datos:
 
-Arranca el servidor PHP:
+   Ejecuta database.sql en tu gestor (phpMyAdmin, MySQL Workbench, etc.)
 
-bash
-php -S localhost:8000
-La API estará disponible en http://localhost:8000.
+4.Arranca el servidor PHP:
 
-Funcionalidades principales
-Gestión de facturas (crear, modificar, emitir) con inmutabilidad (cada cambio registra una nueva versión)
+   php -S localhost:8000
+   La API estará disponible en http://localhost:8000.
 
-Generación de código QR y hash para cada factura
+## Funcionalidades principales
+   -Gestión de facturas (crear, modificar, emitir) con inmutabilidad (cada cambio registra una nueva versión)
+   -Generación de código QR y hash para cada factura
+   -Lectura de PDF mediante IA para extraer datos y crear la factura desde cero
+   -Exportación a XML con todos los datos de la factura
+   -Registro de logs detallados de cada acción (quién, cuándo, qué)
+   -Gestión de usuarios y clientes (sin panel de administración)
 
-Lectura de PDF mediante IA para extraer datos y crear la factura desde cero
-
-Exportación a XML con todos los datos de la factura
-
-Registro de logs detallados de cada acción (quién, cuándo, qué)
-
-Gestión de usuarios y clientes (sin panel de administración)
-
-Seguridad
-Autenticación JWT
-
-Contraseñas cifradas
-
-BBDD inmutable (no se elimina información, solo se añaden nuevas versiones)
-
-Logs encadenados para auditoría
+##Seguridad
+   -Autenticación JWT
+   -Contraseñas cifradas
+   -BBDD inmutable (no se elimina información, solo se añaden nuevas versiones)
+   -Logs encadenados para auditoría
